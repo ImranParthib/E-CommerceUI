@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+  --primary: #ff6f71;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+
+  }
+}
+
+body {
+  color: var(--foreground);
+  color: var(--primary);
+  background: var(--background);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Category Carousel Styles */
+.carousel-container {
+  width: 100%;
+  overflow: hidden;
+}
+
+.carousel-track {
+  width: max-content;
+}
+
+@keyframes scroll-right {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(calc(-100% / 2));
+  }
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(calc(-100% / 2));
+  }
+
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-carousel-right {
+  animation: scroll-right 40s linear infinite;
+}
+
+.animate-carousel-left {
+  animation: scroll-left 40s linear infinite;
+}
+
+/* Pause animation on hover for better UX */
+.carousel-track:hover {
+  animation-play-state: paused;
+}
