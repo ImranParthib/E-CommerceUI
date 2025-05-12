@@ -21,8 +21,11 @@ export async function POST(req) {
             process.env.SSLCOMMERZ_STORE_ID,
             process.env.SSLCOMMERZ_STORE_PASSWORD,
             false // false for sandbox mode
-        );        // Use the official SDK initSession instead of manual API calls
-        // This will help ensure proper API compatibility
+        );
+
+        // Override the API endpoint to use v3 instead of default v4
+        const baseURL = 'https://sandbox.sslcommerz.com';
+        const initURL = baseURL + '/gwprocess/v3/api.php';
 
         // Ensure all required URLs are properly set
         const appBaseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
@@ -53,67 +56,38 @@ export async function POST(req) {
             value_b: amount,
         };
 
-        console.log("Payment initialization with data:", paymentData); try {
-            // Use the SSLCommerz SDK to initialize payment
-            const result = await sslcommerz.init(paymentData);
-            console.log("SSLCommerz init response:", result);
+        console.log("Payment initialization with data:", paymentData);
 
-            if (result?.status === 'SUCCESS') {
-                return Response.json({
-                    status: 'success',
-                    redirectUrl: result.GatewayPageURL,
-                    transactionId: tranId,
-                    data: result
-                });
-            } else {
-                console.error("SSLCommerz initialization failed:", result);
-                return Response.json({
-                    status: 'error',
-                    message: result?.failedreason || 'Payment initialization failed',
-                    data: result
-                }, { status: 400 });
-            }
-        } catch (sdkError) {
-            console.error("SSLCommerz SDK error:", sdkError);
+        // Use custom initURL for the API call
+        const response = await fetch(initURL, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                ...paymentData,
+                store_id: process.env.SSLCOMMERZ_STORE_ID,
+                store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD
+            }).toString()
+        });
 
-            // Fallback to manual API call if SDK fails
-            try {
-                const baseURL = process.env.SSLCOMMERZ_API_URL || 'https://sandbox.sslcommerz.com';
-                const initURL = baseURL + '/gwprocess/v3/api.php';
+        const result = await response.json();
+        console.log("SSLCommerz response:", result);
 
-                const response = await fetch(initURL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/x-www-form-urlencoded',
-                    },
-                    body: new URLSearchParams({
-                        ...paymentData,
-                        store_id: process.env.SSLCOMMERZ_STORE_ID,
-                        store_passwd: process.env.SSLCOMMERZ_STORE_PASSWORD
-                    }).toString()
-                });
-
-                const result = await response.json();
-                console.log("SSLCommerz manual API response:", result);
-
-                if (result?.status === 'SUCCESS') {
-                    return Response.json({
-                        status: 'success',
-                        redirectUrl: result.GatewayPageURL,
-                        transactionId: tranId,
-                        data: result
-                    });
-                } else {
-                    throw new Error(result?.failedreason || 'Payment initialization failed');
-                }
-            } catch (fallbackError) {
-                console.error("SSLCommerz fallback API error:", fallbackError);
-                return Response.json({
-                    status: 'error',
-                    message: 'Payment service unavailable. Please try again later or choose a different payment method.',
-                    error: fallbackError.message
-                }, { status: 500 });
-            }
+        if (result?.status === 'SUCCESS') {
+            return Response.json({
+                status: 'success',
+                redirectUrl: result.GatewayPageURL,
+                transactionId: tranId,
+                data: result
+            });
+        } else {
+            console.error("SSLCommerz initialization failed:", result);
+            return Response.json({
+                status: 'error',
+                message: result?.failedreason || 'Payment initialization failed',
+                data: result
+            }, { status: 400 });
         }
     } catch (error) {
         console.error("Error in payment initialization:", error);

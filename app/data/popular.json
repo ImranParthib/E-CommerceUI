@@ -1,0 +1,178 @@
+{
+    "posters": [
+        "/popular/posters/poster1.png",
+        "/popular/posters/poster2.png",
+        "/popular/posters/poster3.png"
+    ],
+    "products": [
+        {
+            "id": 1,
+            "name": "Golden Grain Puffed Rice (Hand Made)",
+            "quantity": "400 gm",
+            "price": 85,
+            "originalPrice": 90,
+            "image": "/popular/products/puffed-rice.png"
+        },
+        {
+            "id": 2,
+            "name": "Teer Flour (Atta)",
+            "quantity": "2 kg",
+            "price": 120,
+            "originalPrice": 120,
+            "image": "/popular/products/flour.png"
+        },
+        {
+            "id": 3,
+            "name": "Deshi Gajor (Local Carrot)",
+            "quantity": "500 gm",
+            "additionalInfo": "± 25 gm",
+            "price": 25,
+            "originalPrice": 30,
+            "image": "/popular/products/carrot.png"
+        },
+        {
+            "id": 4,
+            "name": "Boot Dal",
+            "quantity": "500 gm",
+            "price": 75,
+            "originalPrice": 75,
+            "image": "/popular/products/boot-dal.png"
+        },
+        {
+            "id": 5,
+            "name": "Nestle Maggi 2-Minute Masala Instant Noodles",
+            "quantity": "8 pack",
+            "price": 175,
+            "originalPrice": 175,
+            "image": "/popular/products/maggi.png"
+        },
+        {
+            "id": 6,
+            "name": "Chicken Eggs (Layer)",
+            "quantity": "12 pcs",
+            "price": 129,
+            "originalPrice": 135,
+            "image": "/popular/products/eggs.png"
+        },
+        {
+            "id": 7,
+            "name": "Potato Regular",
+            "quantity": "1 kg",
+            "additionalInfo": "± 50 gm",
+            "price": 24,
+            "originalPrice": 24,
+            "image": "/popular/products/potato.png"
+        },
+        {
+            "id": 8,
+            "name": "Lal Peyaj (Onion Red Imported)",
+            "quantity": "1 kg",
+            "additionalInfo": "± 50 gm",
+            "price": 69,
+            "originalPrice": 75,
+            "image": "/popular/products/red-onion.png"
+        },
+        {
+            "id": 9,
+            "name": "Deshi Peyaj (Local Onion)",
+            "quantity": "1 kg",
+            "additionalInfo": "± 50 gm",
+            "price": 49,
+            "originalPrice": 55,
+            "image": "/popular/products/local-onion.png"
+        },
+        {
+            "id": 10,
+            "name": "Chicken Eggs Layer (White)",
+            "quantity": "12 pcs",
+            "price": 125,
+            "originalPrice": 129,
+            "image": "/popular/products/white-eggs.png"
+        },
+        {
+            "id": 11,
+            "name": "Fresh Refined Sugar",
+            "quantity": "1 kg",
+            "price": 125,
+            "originalPrice": 150,
+            "image": "/popular/products/sugar.png"
+        },
+        {
+            "id": 12,
+            "name": "Fresh Refined Sugar",
+            "quantity": "1 kg",
+            "price": 125,
+            "originalPrice": 150,
+            "image": "/popular/products/teer-sugar.png"
+        },
+        {
+            "id": 13,
+            "name": "Teer Sugar",
+            "quantity": "1 kg",
+            "price": 125,
+            "originalPrice": 150,
+            "image": "/popular/products/teer-sugar.png"
+        },
+        {
+            "id": 15,
+            "name": "Coriander Leaves (Dhonia Pata)",
+            "quantity": "100 gm",
+            "additionalInfo": "± 10 gm",
+            "price": 9,
+            "originalPrice": 20,
+            "image": "/popular/products/coriander.png"
+        },
+        {
+            "id": 16,
+            "name": "Roshun (Garlic Imported)",
+            "quantity": "500 gm",
+            "additionalInfo": "± 25 gm",
+            "price": 119,
+            "originalPrice": 119,
+            "image": "/popular/products/garlic.png"
+        },
+        {
+            "id": 17,
+            "name": "Lal Alu (Red Potato Cardinal)",
+            "quantity": "1 kg",
+            "additionalInfo": "± 50 gm",
+            "price": 24,
+            "originalPrice": 24,
+            "image": "/popular/products/red-potato.png"
+        },
+        {
+            "id": 18,
+            "name": "Red Tomato",
+            "quantity": "500 gm",
+            "additionalInfo": "± 25 gm",
+            "price": 19,
+            "originalPrice": 25,
+            "image": "/popular/products/tomato.png"
+        },
+        {
+            "id": 19,
+            "name": "Fulkopi (Cauliflower)",
+            "quantity": "each",
+            "price": 29,
+            "originalPrice": 35,
+            "image": "/popular/products/cauliflower.png"
+        },
+        {
+            "id": 20,
+            "name": "Kacha Morich (Green Chilli)",
+            "quantity": "250 gm",
+            "additionalInfo": "±12 gm",
+            "price": 19,
+            "originalPrice": 19,
+            "image": "/popular/products/green-chilli.png"
+        },
+        {
+            "id": 21,
+            "name": "Chinigura Rice Premium",
+            "quantity": "1 kg",
+            "price": 139,
+            "originalPrice": 145,
+            "image": "/popular/products/chinigura-rice.png"
+        }
+    ]
+}

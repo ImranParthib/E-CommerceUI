@@ -1,8 +1,7 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Home, Briefcase, ShoppingBag, MapPin } from 'lucide-react';
-import { DELIVERY_FEE, EXPRESS_DELIVERY_SURCHARGE } from '@/app/config/constants';
+import { useState, useEffect } from 'react';
+import { MapPin, Home, Briefcase, ShoppingBag } from 'lucide-react';
 
 export default function DeliveryForm({
     onSubmit,
@@ -39,8 +38,8 @@ export default function DeliveryForm({
     const handleAddressSelect = (address) => {
         if (!address) return;
 
-        // Format address properly for delivery
-        const deliveryAddress = formatAddressForDelivery(address);
+        // For delivery, we combine fullAddress and area
+        const deliveryAddress = `${address.fullAddress}${address.area ? ', ' + address.area : ''}`;
 
         setFormData({
             name: prefillData?.name || '',
@@ -51,22 +50,9 @@ export default function DeliveryForm({
             zip: '1200', // Default Dhaka ZIP code
             notes: '',
             deliveryTime: 'standard',
-            // Store the original address ID for reference
-            selectedAddressId: address.id
         });
 
         setSelectedAddressId(address.id);
-    };
-
-    // Helper function to format address for delivery
-    const formatAddressForDelivery = (address) => {
-        let formattedAddress = address.fullAddress || '';
-
-        if (address.area) {
-            formattedAddress += formattedAddress ? `, ${address.area}` : address.area;
-        }
-
-        return formattedAddress;
     };
 
     const handleChange = (e) => {
@@ -76,17 +62,7 @@ export default function DeliveryForm({
 
     const handleSubmit = (e) => {
         e.preventDefault();
-
-        // Find the original address object if a saved address was selected
-        const selectedAddress = savedAddresses?.find(addr => addr.id === selectedAddressId);
-
-        // Include original address data if available
-        const submissionData = {
-            ...formData,
-            originalAddress: selectedAddress || null
-        };
-
-        onSubmit(submissionData);
+        onSubmit(formData);
     };
 
     const getAddressIcon = (type) => {
@@ -120,8 +96,8 @@ export default function DeliveryForm({
                             <label
                                 key={address.id}
                                 className={`flex items-start border rounded-lg p-3 cursor-pointer transition-colors ${selectedAddressId === address.id
-                                    ? 'bg-blue-50 border-blue-300'
-                                    : 'bg-white border-gray-200 hover:bg-gray-50'
+                                        ? 'bg-blue-50 border-blue-300'
+                                        : 'bg-white border-gray-200 hover:bg-gray-50'
                                     }`}
                             >
                                 <input
@@ -261,7 +237,7 @@ export default function DeliveryForm({
                         className="w-full p-2 border border-gray-300 rounded-md"
                     >
                         <option value="standard">Standard Delivery (Within 24hrs)</option>
-                        <option value="express">Express Delivery (3-5 hrs, +৳{EXPRESS_DELIVERY_SURCHARGE})</option>
+                        <option value="express">Express Delivery (3-5 hrs, +৳50)</option>
                     </select>
                 </div>
 

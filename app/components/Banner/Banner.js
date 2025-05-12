@@ -1,27 +1,13 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import Image from "next/image";
 import { useScrollPosition } from "@/app/hooks/useScrollPosition";
 import { ArrowRight, Truck, Clock, Shield } from "lucide-react";
 import Link from 'next/link';
-import { auth } from '@/lib/firebase';
-import CategoryCarousel from '../CategoryCarousel/CategoryCarousel';
 
 const Banner = () => {
     const scrollPosition = useScrollPosition();
-    const [user, setUser] = useState(null);
-    const [loading, setLoading] = useState(true);
-
-    // Check if user is authenticated
-    useEffect(() => {
-        const unsubscribe = auth.onAuthStateChanged((authUser) => {
-            setUser(authUser);
-            setLoading(false);
-        });
-
-        return () => unsubscribe();
-    }, []);
 
     // Parallax effect calculation
     const imageOffset = Math.min(scrollPosition * 0.3, 100);
@@ -33,21 +19,6 @@ const Banner = () => {
         { icon: <Shield className="w-6 h-6" />, text: "Secure Payment" }
     ];
 
-    // Show loading state while checking authentication
-    if (loading) {
-        return (
-            <div className="flex justify-center items-center h-64 bg-gradient-to-r from-yellow-100 to-yellow-300">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-yellow-600"></div>
-            </div>
-        );
-    }
-
-    // If user is logged in, show the category carousel
-    if (user) {
-        return <CategoryCarousel />;
-    }
-
-    // If user is not logged in, show the banner
     return (
         <div id="banner" className="relative overflow-hidden bg-gradient-to-r from-yellow-100 to-yellow-300">
             {/* Main Content Container */}
@@ -67,7 +38,7 @@ const Banner = () => {
                         </p>
 
                         {/* CTA Button */}
-                        <Link href="/category/flash-sales" className="bg-gray-800 text-white px-8 py-4 rounded-full rounded-br-sm inline-flex items-center space-x-2 hover:bg-gray-700 transition-colors w-fit group">
+                        <Link href="/flash-sales" className="bg-gray-800 text-white px-8 py-4 rounded-full rounded-br-sm inline-flex items-center space-x-2 hover:bg-gray-700 transition-colors w-fit group">
                             <span>Shop Now</span>
                             <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
                         </Link>

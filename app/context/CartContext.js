@@ -5,9 +5,9 @@ import { toast } from 'react-toastify';
 
 const CartContext = createContext();
 
-const CART_STORAGE_KEY = 'kenakata_cart_items';
-const RECENT_ITEMS_KEY = 'kenakata_recent_items';
-const WISHLIST_KEY = 'kenakata_wishlist';
+const CART_STORAGE_KEY = 'chaldal_cart_items';
+const RECENT_ITEMS_KEY = 'chaldal_recent_items';
+const WISHLIST_KEY = 'chaldal_wishlist';
 
 export function CartProvider({ children }) {
     const [cartItems, setCartItems] = useState([]);
@@ -78,20 +78,6 @@ export function CartProvider({ children }) {
         // This ensures products are uniquely identified across different sections
         const productKey = generateProductKey(product);
 
-        // Ensure we preserve all important attributes
-        const enhancedProduct = {
-            ...product,
-            price: product.price || product.sale_price || 0,
-            // Preserve selected attributes if they exist
-            selectedAttributes: product.selectedAttributes || {},
-            // Preserve color, size and other attributes if available
-            attributes: product.attributes || [],
-            // Preserve variations
-            variation_id: product.variation_id || null,
-            // Preserve any metadata
-            meta_data: product.meta_data || []
-        };
-
         const existingItem = cartItems.find(item => generateProductKey(item) === productKey);
 
         if (existingItem) {
@@ -103,99 +89,46 @@ export function CartProvider({ children }) {
             ));
         } else {
             toast.success(`${product.name} added to cart`);
-            setCartItems(prevItems => [...prevItems, { ...enhancedProduct, quantity }]);
+            setCartItems(prevItems => [...prevItems, { ...product, quantity }]);
         }
 
         // Add to recent items
-        addToRecentItems(enhancedProduct);
+        addToRecentItems(product);
     };
 
     // Generate a unique key for a product
     const generateProductKey = (product) => {
-        // Base key from product ID and category
-        let key = product.category ? `${product.id}-${product.category}` : `${product.id}`;
-
-        // Include selected attributes in the key to differentiate between same product with different attributes
-        if (product.selectedAttributes && Object.keys(product.selectedAttributes).length > 0) {
-            // Sort keys to ensure consistent ordering regardless of how attributes were selected
-            const attributeKeys = Object.keys(product.selectedAttributes).sort();
-            const attributeString = attributeKeys
-                .map(key => `${key}-${product.selectedAttributes[key]}`)
-                .join('_');
-
-            key = `${key}-${attributeString}`;
-        }
-
-        return key;
+        // Use the product ID as the primary identifier for uniqueness across sections
+        // If the product is from a specific section, we can add section info
+        return product.category ? `${product.id}-${product.category}` : `${product.id}`;
     };
 
     // Remove an item from cart
-    const removeFromCart = (productId, category, selectedAttributes = {}) => {
-        // First try to find the item using the full key (with attributes)
-        const itemToRemove = cartItems.find(item => {
-            // If we're provided with a full item object that already has a key structure
-            if (typeof productId === 'object') {
-                return generateProductKey(productId) === generateProductKey(item);
-            }
+    const removeFromCart = (productId, category) => {
+        // Create the same key format for lookup
+        const lookupKey = category ? `${productId}-${category}` : productId;
 
-            // Otherwise construct a temporary object to generate a matching key
-            const tempProduct = {
-                id: productId,
-                category,
-                selectedAttributes
-            };
-            return generateProductKey(tempProduct) === generateProductKey(item);
-        });
-
+        const itemToRemove = cartItems.find(item => generateProductKey(item) === lookupKey);
         if (itemToRemove) {
-            setCartItems(prevItems => prevItems.filter(item => generateProductKey(item) !== generateProductKey(itemToRemove)));
+            setCartItems(prevItems => prevItems.filter(item => generateProductKey(item) !== lookupKey));
         }
     };
 
-    const updateQuantity = (productId, quantity, category, selectedAttributes = {}) => {
+    const updateQuantity = (productId, quantity, category) => {
         if (quantity <= 0) {
-            // Find the item first to get its name for the toast
-            const itemToRemove = cartItems.find(item => {
-                // If we're provided with a full item object
-                if (typeof productId === 'object') {
-                    return generateProductKey(productId) === generateProductKey(item);
-                }
-
-                // Build a temp product for key generation
-                const tempProduct = {
-                    id: productId,
-                    category,
-                    selectedAttributes
-                };
-                return generateProductKey(tempProduct) === generateProductKey(item);
-            });
-
-            if (itemToRemove) {
-                toast.info(`${itemToRemove.name} removed from cart`);
-                removeFromCart(productId, category, selectedAttributes);
-            }
+            removeFromCart(productId, category);
             return;
         }
 
-        // Update quantity of the specific item matching all criteria including attributes
-        setCartItems(prevItems =>
-            prevItems.map(item => {
-                if (typeof productId === 'object') {
-                    return generateProductKey(productId) === generateProductKey(item)
-                        ? { ...item, quantity }
-                        : item;
-                }
+        // Create the same key format for lookup
+        const lookupKey = category ? `${productId}-${category}` : productId;
 
-                // Build a temp product for key comparison
-                const tempProduct = {
-                    id: productId,
-                    category,
-                    selectedAttributes
-                };
-                return generateProductKey(tempProduct) === generateProductKey(item)
+        setCartItems(prevItems =>
+            prevItems.map(item =>
+                generateProductKey(item) === lookupKey
                     ? { ...item, quantity }
-                    : item;
-            })
+                    : item
+            )
         );
     };
 
@@ -233,65 +166,19 @@ export function CartProvider({ children }) {
         toast.success('Order items restored to cart');
     };
 
-    const isInCart = (productId, category, selectedAttributes = {}) => {
-        // If we have a full product object
-        if (typeof productId === 'object') {
-            const productKey = generateProductKey(productId);
-            return cartItems.some(item => generateProductKey(item) === productKey);
-        }
-
-        // Otherwise construct a temporary object with the provided details
-        const tempProduct = {
-            id: productId,
-            category,
-            selectedAttributes
-        };
-        const productKey = generateProductKey(tempProduct);
-        return cartItems.some(item => generateProductKey(item) === productKey);
+    const isInCart = (productId, category) => {
+        // Create the same key format for lookup
+        const lookupKey = category ? `${productId}-${category}` : productId;
+        return cartItems.some(item => generateProductKey(item) === lookupKey);
     };
 
     const bulkAddToCart = (products) => {
-        if (!Array.isArray(products) || products.length === 0) return;
-
-        let addedCount = 0;
-
-        const updatedCartItems = [...cartItems];
+        if (!products || products.length === 0) return;
 
         products.forEach(product => {
-            // Create a unique key for the product
-            const key = generateProductKey(product);
-
-            // Ensure we preserve all important attributes
-            const enhancedProduct = {
-                ...product,
-                price: product.price || product.sale_price || 0,
-                // Preserve selected attributes if they exist
-                selectedAttributes: product.selectedAttributes || {},
-                // Preserve color, size and other attributes if available
-                attributes: product.attributes || [],
-                // Preserve variations
-                variation_id: product.variation_id || null,
-                // Preserve any metadata
-                meta_data: product.meta_data || []
-            };
-
-            const existingItemIndex = updatedCartItems.findIndex(item => generateProductKey(item) === key);
-
-            if (existingItemIndex !== -1) {
-                updatedCartItems[existingItemIndex].quantity += (product.quantity || 1);
-            } else {
-                updatedCartItems.push({
-                    ...enhancedProduct,
-                    quantity: product.quantity || 1
-                });
-            }
-            addedCount++;
+            addToCart(product, product.quantity || 1);
         });
-
-        setCartItems(updatedCartItems);
-
-        // The toast is already shown in OrderDetails.js so we don't need it here
-        // toast.success(`${addedCount} item${addedCount > 1 ? 's' : ''} added to cart`);
+        toast.success('All items added to cart');
     };
 
     // Wishlist functionality

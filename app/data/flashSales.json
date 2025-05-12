@@ -1,0 +1,241 @@
+{
+    "posters": [
+        "/flashsales/posters/flashSales1.png",
+        "/flashsales/posters/flashSales2.png",
+        "/flashsales/posters/flashSales3.png"
+    ],
+    "products": [
+        {
+            "id": 1,
+            "name": "Harpic All-In-One Toilet & Bathroom Cleaning Powder 400 gm (Combo Offer)",
+            "quantity": "2 pcs",
+            "price": 175,
+            "originalPrice": 200,
+            "image": "/flashsales/products/harpic.png"
+        },
+        {
+            "id": 2,
+            "name": "Chaldal Basic Synthetic Detergent Powder",
+            "quantity": "1 kg",
+            "price": 139,
+            "originalPrice": 290,
+            "image": "/flashsales/products/detergent.png"
+        },
+        {
+            "id": 3,
+            "name": "Dettol Soap Bathing Bar Family Pack (Cool, Skincare & Original) 75 gm",
+            "quantity": "3 pcs",
+            "price": 165,
+            "originalPrice": 190,
+            "image": "/flashsales/products/dettol_soap.png"
+        },
+        {
+            "id": 4,
+            "name": "Dettol Skincare Bodywash (Free Loofah)",
+            "quantity": "250 ml",
+            "price": 185,
+            "originalPrice": 200,
+            "image": "/flashsales/products/dettol_bodywash.png"
+        },
+        {
+            "id": 5,
+            "name": "Harpic Flushmatic Marine In-Cistern Toilet Cleaner Blocks 50 gm",
+            "quantity": "2 pcs",
+            "price": 249,
+            "originalPrice": 300,
+            "image": "/flashsales/products/harpic_flushmatic.png"
+        },
+        {
+            "id": 6,
+            "name": "Funtastic Milk Mate Biscuit",
+            "quantity": "225 gm",
+            "price": 45,
+            "originalPrice": 50,
+            "image": "/flashsales/products/milk_mate_biscuit.png"
+        },
+        {
+            "id": 7,
+            "name": "Veet Pure Hair Removal Cream Normal Skin With Organic Aloe Vera & Rose Extracts",
+            "quantity": "100 gm",
+            "price": 275,
+            "originalPrice": 320,
+            "image": "/flashsales/products/veet.png"
+        },
+        {
+            "id": 8,
+            "name": "Chaldal Sippy Orange Drinks",
+            "quantity": "500 gm",
+            "price": 249,
+            "originalPrice": 500,
+            "image": "/flashsales/products/sippy_orange.png"
+        },
+        {
+            "id": 9,
+            "name": "Chaldal Sippy Mango Drinks",
+            "quantity": "500 gm",
+            "price": 249,
+            "originalPrice": 500,
+            "image": "/flashsales/products/sippy_mango.png"
+        },
+        {
+            "id": 10,
+            "name": "Pond's Bright Beauty Anti-Spot-Formula Serum Cream",
+            "quantity": "35 gm",
+            "price": 164,
+            "originalPrice": 240,
+            "image": "/flashsales/products/ponds.png"
+        },
+        {
+            "id": 11,
+            "name": "Dettol Soap Bathing Bar Cool 125 gm (Combo Pack)",
+            "quantity": "4 pcs",
+            "price": 309,
+            "originalPrice": 360,
+            "image": "/flashsales/products/dettol_soap_combo.png"
+        },
+        {
+            "id": 12,
+            "name": "Glucomax D Instant Energy",
+            "quantity": "200 gm",
+            "price": 83,
+            "originalPrice": 99,
+            "image": "/flashsales/products/glucomax.png"
+        },
+        {
+            "id": 13,
+            "name": "Nannys Baby Love Diaper Belt 4 Maxi 8-18 kg (Free Wipes 72 pcs)",
+            "quantity": "25 pcs",
+            "price": 649,
+            "originalPrice": 925,
+            "image": "/flashsales/products/nannys_diaper.png"
+        },
+        {
+            "id": 14,
+            "name": "Vaseline Mosquito Defence Lotion",
+            "quantity": "100 ml",
+            "price": 153,
+            "originalPrice": 200,
+            "image": "/flashsales/products/vaseline_mosquito.png"
+        },
+        {
+            "id": 15,
+            "name": "Vaseline Mosquito Defence Lotion",
+            "quantity": "50 ml",
+            "price": 76,
+            "originalPrice": 99,
+            "image": "/flashsales/products/vaseline_mosquito_small.png"
+        },
+        {
+            "id": 16,
+            "name": "Haircode Egypt Mehedi Creme Color (Hair & Beard) 25 gm",
+            "quantity": "2 pcs",
+            "price": 55,
+            "originalPrice": 60,
+            "image": "/flashsales/products/haircode.png"
+        },
+        {
+            "id": 17,
+            "name": "Nihar Naturals Lovely Coconut Castor Hair Oil",
+            "quantity": "150 ml",
+            "price": 119,
+            "originalPrice": 125,
+            "image": "/flashsales/products/nihar.png"
+        },
+        {
+            "id": 18,
+            "name": "Hajmola Borhani 100 Tablets",
+            "quantity": "74 gm",
+            "price": 89,
+            "originalPrice": 100,
+            "image": "/flashsales/products/hajmola.png"
+        },
+        {
+            "id": 19,
+            "name": "Basil Seed Drink (Apple)",
+            "quantity": "290 ml",
+            "price": 225,
+            "originalPrice": 270,
+            "image": "/flashsales/products/basil_seed_drink.png"
+        },
+        {
+            "id": 20,
+            "name": "Finis Wood Preservative Tin",
+            "quantity": "480 ml",
+            "price": 135,
+            "originalPrice": 150,
+            "image": "/flashsales/products/finis_wood.png"
+        },
+        {
+            "id": 21,
+            "name": "Nivea Men Sensitive After Shave Lotion",
+            "quantity": "100 ml",
+            "price": 275,
+            "originalPrice": 550,
+            "image": "/flashsales/products/nivea.png"
+        },
+        {
+            "id": 22,
+            "name": "Petme Oral +Plus Gel",
+            "quantity": "30 gm",
+            "price": 349,
+            "originalPrice": 580,
+            "image": "/flashsales/products/petme.png"
+        },
+        {
+            "id": 23,
+            "name": "Fanta Can Orange Flavored",
+            "quantity": "250 ml",
+            "price": 65,
+            "originalPrice": 70,
+            "image": "/flashsales/products/fanta.png"
+        },
+        {
+            "id": 24,
+            "name": "Indulekha Bringha Ayurvedic Hair Oil",
+            "quantity": "50 ml",
+            "price": 499,
+            "originalPrice": 760,
+            "image": "/flashsales/products/indulekha.png"
+        },
+        {
+            "id": 25,
+            "name": "Silicone Lace",
+            "quantity": "each",
+            "price": 315,
+            "originalPrice": 379,
+            "image": "/flashsales/products/silicone_lace.png"
+        },
+        {
+            "id": 26,
+            "name": "Fondant Cutter Full Set",
+            "quantity": "3 pcs",
+            "price": 159,
+            "originalPrice": 195,
+            "image": "/flashsales/products/fondant_cutter.png"
+        },
+        {
+            "id": 27,
+            "name": "Kazi & Kazi Organic First Flush Black Tea",
+            "quantity": "100 gm",
+            "price": 199,
+            "originalPrice": 220,
+            "image": "/flashsales/products/kazi_tea.png"
+        },
+        {
+            "id": 28,
+            "name": "Godrej Aer Twist Dashboard Car Freshener Fresh Lush (Green)",
+            "quantity": "10 gm",
+            "price": 359,
+            "originalPrice": 399,
+            "image": "/flashsales/products/godrej.png"
+        },
+        {
+            "id": 29,
+            "name": "Tong Garden Salted Cashew Nuts Can",
+            "quantity": "150 gm",
+            "price": 705,
+            "originalPrice": 995,
+            "image": "/flashsales/products/tong_garden.png"
+        }
+    ]
+}

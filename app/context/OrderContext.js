@@ -1,25 +1,27 @@
 'use client';
 
-import { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
 import { useCart } from './CartContext';
 import { auth } from '@/lib/firebase';
-import {
-    ORDER_STATUSES,
-    PAYMENT_STATUSES,
-    DELIVERY_FEE,
-    EXPRESS_DELIVERY_SURCHARGE
-} from '@/app/config/constants';
 
 const OrderContext = createContext();
 
-const ORDER_STORAGE_KEY = 'kenakata_orders';
+const ORDER_STORAGE_KEY = 'chaldal_orders';
 
 export function OrderProvider({ children }) {
     const [orders, setOrders] = useState([]);
     const [isInitialized, setIsInitialized] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const { cartItems, clearCart, getCartTotal } = useCart();
+
+    const ORDER_STATUSES = {
+        PENDING: 'pending',
+        CONFIRMED: 'confirmed',
+        PROCESSING: 'processing',
+        COMPLETED: 'completed',
+        CANCELLED: 'cancelled'
+    };
 
     // Load orders from localStorage on initial mount
     useEffect(() => {
@@ -86,47 +88,6 @@ export function OrderProvider({ children }) {
         return getOrderById(orderId);
     };
 
-    const normalizeOrderData = useCallback((order) => {
-        if (!order) return null;
-
-        // Calculate order total from items if not provided
-        const calculatedTotal = order.items ?
-            order.items.reduce((sum, item) => sum + (item.price * (item.quantity || 1)), 0) : 0;
-
-        // Determine delivery fee based on city or use INSIDE_DHAKA as fallback
-        const baseFee = order.delivery?.city && order.delivery.city.toLowerCase() !== 'dhaka'
-            ? DELIVERY_FEE.OUTSIDE_DHAKA
-            : DELIVERY_FEE.INSIDE_DHAKA;
-
-        // Calculate final delivery fee
-        const deliveryFee = order.deliveryTime === 'express'
-            ? baseFee + EXPRESS_DELIVERY_SURCHARGE
-            : baseFee;
-
-        // Ensure order has all required fields in a logical sequence
-        return {
-            id: order.id || `order_${Date.now()}`,
-            userId: order.userId || auth.currentUser?.uid,
-            status: order.status || ORDER_STATUSES.PENDING,
-            paymentStatus: order.paymentStatus || PAYMENT_STATUSES.UNPAID,
-            paymentMethod: order.paymentMethod || 'pending',
-            items: order.items || [],
-            total: order.total || order.totalAmount || calculatedTotal,
-            discount: order.discount || 0,
-            deliveryFee: order.deliveryFee || deliveryFee,
-            delivery: order.delivery || {},
-            createdAt: order.createdAt || new Date().toISOString(),
-            updatedAt: order.updatedAt || new Date().toISOString(),
-            statusHistory: order.statusHistory || [
-                {
-                    status: order.status || ORDER_STATUSES.PENDING,
-                    timestamp: order.createdAt || new Date().toISOString()
-                }
-            ],
-            ...order // Preserve other custom fields
-        };
-    }, []);
-
     const createOrder = (deliveryDetails) => {
         if (!auth.currentUser) {
             toast.error('Please login to place an order');
@@ -138,54 +99,24 @@ export function OrderProvider({ children }) {
             return null;
         }
 
-        const orderItems = cartItems.map(item => ({
-            ...item,
-            quantity: item.quantity || 1,
-            // Ensure all product details are preserved
-            price: item.price || item.sale_price || 0,
-            selectedAttributes: item.selectedAttributes || {},
-            attributes: item.attributes || [],
-            variation_id: item.variation_id || null,
-            meta_data: item.meta_data || []
-        }));
-
-        // Determine delivery fee based on city
-        const baseFee = deliveryDetails.city && deliveryDetails.city.toLowerCase() !== 'dhaka'
-            ? DELIVERY_FEE.OUTSIDE_DHAKA
-            : DELIVERY_FEE.INSIDE_DHAKA;
-
-        // Calculate final delivery fee
-        const deliveryFee = deliveryDetails.deliveryTime === 'express'
-            ? baseFee + EXPRESS_DELIVERY_SURCHARGE
-            : baseFee;
-
-        const newOrder = normalizeOrderData({
+        const newOrder = {
             id: `order_${Date.now()}`,
             userId: auth.currentUser.uid,
-            items: orderItems,
-            total: orderItems.reduce((sum, item) => sum + (item.price * item.quantity), 0),
-            deliveryFee: deliveryFee,
+            items: [...cartItems], // Make a copy of cart items
+            total: getCartTotal(),
             status: ORDER_STATUSES.PENDING,
             paymentMethod: 'pending',
-            paymentStatus: PAYMENT_STATUSES.UNPAID,
+            paymentStatus: 'unpaid',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
-            delivery: {
-                name: deliveryDetails.name,
-                phone: deliveryDetails.phone,
-                address: deliveryDetails.address,
-                city: deliveryDetails.city,
-                zip: deliveryDetails.zip
-            },
-            deliveryTime: deliveryDetails.deliveryTime,
-            deliveryNotes: deliveryDetails.notes,
+            delivery: deliveryDetails,
             statusHistory: [
                 {
                     status: ORDER_STATUSES.PENDING,
                     timestamp: new Date().toISOString()
                 }
             ]
-        });
+        };
 
         // Update state with new order
         setOrders(prevOrders => [newOrder, ...prevOrders]);
@@ -194,79 +125,7 @@ export function OrderProvider({ children }) {
         clearCart();
 
         toast.success('Order created successfully!');
-
-        // Sync with WooCommerce if we have a customer ID
-        syncOrderWithWooCommerce(newOrder);
-
         return newOrder;
-    };
-
-    const syncOrderWithWooCommerce = async (order) => {
-        try {
-            const userProfileData = localStorage.getItem(`user_profile_data_${auth.currentUser.uid}`);
-            if (!userProfileData) {
-                console.warn('No user profile found, skipping WooCommerce sync');
-                return;
-            }
-
-            const userProfile = JSON.parse(userProfileData);
-            if (!userProfile.woocommerceId) {
-                console.warn('No WooCommerce customer ID found, skipping WooCommerce sync');
-                return;
-            }
-
-            const customerData = {
-                woocommerceId: userProfile.woocommerceId,
-                email: userProfile.email || auth.currentUser.email,
-                displayName: userProfile.displayName || auth.currentUser.displayName,
-                phoneNumber: userProfile.phoneNumber
-            };
-
-            const response = await fetch('/api/orders/sync', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({
-                    ...order,
-                    customerData
-                })
-            });
-
-            const result = await response.json();
-
-            if (!response.ok) {
-                throw new Error(result.message || 'Failed to sync with WooCommerce');
-            }
-
-            const orderIndex = orders.findIndex(o => o.id === order.id);
-            if (orderIndex !== -1) {
-                const updatedOrders = [...orders];
-                updatedOrders[orderIndex] = {
-                    ...orders[orderIndex],
-                    woocommerceId: result.wcOrderId,
-                    lastSynced: new Date().toISOString()
-                };
-                setOrders(updatedOrders);
-
-                if (auth.currentUser) {
-                    try {
-                        const userId = auth.currentUser.uid;
-                        localStorage.setItem(
-                            `${ORDER_STORAGE_KEY}_${userId}`,
-                            JSON.stringify(updatedOrders)
-                        );
-                    } catch (error) {
-                        console.error('Error saving orders:', error);
-                    }
-                }
-            }
-
-            console.log('Order synced with WooCommerce:', result);
-            return result;
-        } catch (error) {
-            console.error('Error syncing order with WooCommerce:', error);
-        }
     };
 
     const cancelOrder = async (orderId) => {
@@ -301,7 +160,8 @@ export function OrderProvider({ children }) {
             updatedOrders[orderIndex] = updatedOrder;
             setOrders(updatedOrders);
 
-            return updatedOrder;
+            toast.success('Order cancelled successfully');
+            return true;
         } catch (error) {
             console.error('Error cancelling order:', error);
             toast.error('Failed to cancel order');
@@ -349,103 +209,46 @@ export function OrderProvider({ children }) {
     };
 
     const confirmOrder = (orderId, paymentMethod, paymentDetails = null) => {
-        try {
-            const orderIndex = orders.findIndex(order => order.id === orderId);
-            if (orderIndex === -1) {
-                console.error(`Order not found: ${orderId}`);
-                toast.error('Order not found');
-                return false;
-            }
-
-            const order = orders[orderIndex];
-
-            // Set appropriate statuses based on payment method
-            let newStatus;
-            let newPaymentStatus;
-
-            if (paymentMethod === 'cod') {
-                // For Cash on Delivery, mark as confirmed and payment as pending
-                newStatus = ORDER_STATUSES.CONFIRMED;
-                newPaymentStatus = 'pending';
-            } else if (paymentMethod === 'online') {
-                // For online payment, status depends on payment details
-                if (paymentDetails?.status === 'paid') {
-                    // If payment was successful, mark as processing
-                    newStatus = ORDER_STATUSES.PROCESSING;
-                    newPaymentStatus = 'paid';
-                } else {
-                    // If payment is still pending, keep order as pending
-                    newStatus = ORDER_STATUSES.PENDING;
-                    newPaymentStatus = 'pending';
-                }
-            } else if (paymentMethod === 'pending') {
-                // If payment method is still pending, keep order as pending
-                newStatus = ORDER_STATUSES.PENDING;
-                newPaymentStatus = 'pending';
-            } else {
-                // Default fallback
-                newStatus = ORDER_STATUSES.PENDING;
-                newPaymentStatus = 'pending';
-            }
-
-            const updatedOrder = {
-                ...order,
-                status: newStatus,
-                paymentMethod,
-                paymentStatus: newPaymentStatus,
-                updatedAt: new Date().toISOString(),
-                statusHistory: [
-                    ...order.statusHistory,
-                    {
-                        status: newStatus,
-                        timestamp: new Date().toISOString()
-                    }
-                ]
-            };
-
-            // Add payment details if provided
-            if (paymentDetails) {
-                if (paymentDetails.transactionId) {
-                    updatedOrder.transactionId = paymentDetails.transactionId;
-                }
-                if (paymentDetails.status) {
-                    updatedOrder.paymentStatus = paymentDetails.status;
-                }
-            }
-
-            const updatedOrders = [...orders];
-            updatedOrders[orderIndex] = updatedOrder;
-            setOrders(updatedOrders);
-
-            console.log(`Order ${orderId} confirmed with payment method: ${paymentMethod}`, updatedOrder);
-            return true;
-        } catch (error) {
-            console.error(`Error confirming order ${orderId}:`, error);
-            toast.error('Failed to confirm order');
+        const orderIndex = orders.findIndex(order => order.id === orderId);
+        if (orderIndex === -1) {
+            toast.error('Order not found');
             return false;
         }
+
+        const order = orders[orderIndex];
+        const updatedOrder = {
+            ...order,
+            status: paymentMethod === 'cod' ? ORDER_STATUSES.CONFIRMED : ORDER_STATUSES.PROCESSING,
+            paymentMethod,
+            paymentStatus: paymentMethod === 'cod' ? 'pending' : 'paid',
+            updatedAt: new Date().toISOString(),
+            statusHistory: [
+                ...order.statusHistory,
+                {
+                    status: paymentMethod === 'cod' ? ORDER_STATUSES.CONFIRMED : ORDER_STATUSES.PROCESSING,
+                    timestamp: new Date().toISOString()
+                }
+            ]
+        };
+
+        // Add payment details if provided
+        if (paymentDetails) {
+            if (paymentDetails.transactionId) {
+                updatedOrder.transactionId = paymentDetails.transactionId;
+            }
+            if (paymentDetails.status) {
+                updatedOrder.paymentStatus = paymentDetails.status;
+            }
+        }
+
+        const updatedOrders = [...orders];
+        updatedOrders[orderIndex] = updatedOrder;
+        setOrders(updatedOrders);
+
+        return true;
     };
 
-    const deduplicateStatusHistory = (statusHistory) => {
-        if (!statusHistory || !Array.isArray(statusHistory)) return [];
-
-        const latestStatusMap = new Map();
-
-        [...statusHistory].sort((a, b) => {
-            const timeA = new Date(a.timestamp).getTime();
-            const timeB = new Date(b.timestamp).getTime();
-            return timeA - timeB;
-        }).forEach(entry => {
-            latestStatusMap.set(entry.status, entry);
-        });
-
-        return Array.from(latestStatusMap.values()).sort((a, b) => {
-            const timeA = new Date(a.timestamp).getTime();
-            const timeB = new Date(b.timestamp).getTime();
-            return timeA - timeB;
-        });
-    };
-
+    // Add a method to handle payment status updates
     const updatePaymentStatus = (orderId, status, details = {}) => {
         const orderIndex = orders.findIndex(order => order.id === orderId);
         if (orderIndex === -1) {
@@ -453,11 +256,6 @@ export function OrderProvider({ children }) {
         }
 
         const order = orders[orderIndex];
-
-        if (order.paymentStatus === status) {
-            return true;
-        }
-
         const updatedOrder = {
             ...order,
             paymentStatus: status,
@@ -468,20 +266,13 @@ export function OrderProvider({ children }) {
             updatedOrder.transactionId = details.transactionId;
         }
 
-        if (status === 'paid' && order.status !== ORDER_STATUSES.PROCESSING) {
+        // If payment is completed successfully, update order status accordingly
+        if (status === 'paid') {
             updatedOrder.status = ORDER_STATUSES.PROCESSING;
-
-            if (!order.statusHistory.some(s => s.status === ORDER_STATUSES.PROCESSING)) {
-                updatedOrder.statusHistory = [
-                    ...order.statusHistory,
-                    {
-                        status: ORDER_STATUSES.PROCESSING,
-                        timestamp: new Date().toISOString()
-                    }
-                ];
-
-                updatedOrder.statusHistory = deduplicateStatusHistory(updatedOrder.statusHistory);
-            }
+            updatedOrder.statusHistory.push({
+                status: ORDER_STATUSES.PROCESSING,
+                timestamp: new Date().toISOString()
+            });
         }
 
         const updatedOrders = [...orders];
@@ -502,9 +293,7 @@ export function OrderProvider({ children }) {
             getOrderDetails,
             confirmOrder,
             updatePaymentStatus,
-            syncOrderWithWooCommerce,
-            ORDER_STATUSES,
-            PAYMENT_STATUSES
+            ORDER_STATUSES
         }}>
             {children}
         </OrderContext.Provider>

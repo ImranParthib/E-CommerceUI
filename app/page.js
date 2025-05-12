@@ -5,9 +5,10 @@ import dynamic from 'next/dynamic';
 import NavBar from "./components/NavBar/NavBar";
 import Banner from "./components/Banner/Banner";
 import Features from "./components/Features/Features";
-import BrandShowcase from "./components/BrandShowcase/BrandShowcase";
 import { useSidebar } from './context/SidebarContext';
-
+import HomeProducts from './components/HomeProducts/HomeProducts';
+import FlashSales from './components/FlashSales/FlashSales';
+import Popular from './components/Popular/Popular';
 
 // Dynamically import heavy components
 const SideNavigation = dynamic(() => import("./components/SideNavigation/SideNavigation"));
@@ -23,7 +24,7 @@ export default function Home() {
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'sm:ml-60' : 'ml-0'}`}>
         <main>
           <Banner />
-          <BrandShowcase />
+          <HomeProducts />
           <Features />
           <Footer />
         </main>

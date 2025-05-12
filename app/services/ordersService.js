@@ -6,7 +6,6 @@ import { toast } from 'react-toastify';
 
 // Fallback to local storage when Firestore isn't working
 const LOCAL_STORAGE_KEY = 'user_orders_data';
-const USER_PROFILE_STORAGE_KEY = 'user_profile_data';
 
 export function useOrdersAPI() {
     const [isLoading, setIsLoading] = useState(false);
@@ -25,49 +24,6 @@ export function useOrdersAPI() {
         }
     }, []);
 
-    // Helper function to get user profile from local storage
-    const getUserProfile = useCallback((userId) => {
-        try {
-            const savedProfile = localStorage.getItem(`${USER_PROFILE_STORAGE_KEY}_${userId}`);
-            return savedProfile ? JSON.parse(savedProfile) : null;
-        } catch (error) {
-            console.error('Error reading profile from localStorage:', error);
-            return null;
-        }
-    }, []);
-
-    // New helper function to normalize order data for consistency
-    const normalizeOrderData = useCallback((order) => {
-        if (!order) return null;
-
-        // Ensure order has all the required fields in a consistent sequence
-        return {
-            id: order.id || `order_${Date.now()}`,
-            userId: order.userId || auth.currentUser?.uid,
-            status: order.status || 'pending',
-            paymentStatus: order.paymentStatus || 'unpaid',
-            paymentMethod: order.paymentMethod || 'pending',
-            items: order.items || [],
-            total: order.total || order.totalAmount || calculateOrderTotal(order.items || []),
-            delivery: order.delivery || {},
-            discount: order.discount || 0,
-            deliveryFee: order.deliveryFee || 60,
-            createdAt: order.createdAt || new Date().toISOString(),
-            updatedAt: order.updatedAt || new Date().toISOString(),
-            statusHistory: order.statusHistory || [
-                {
-                    status: order.status || 'pending',
-                    timestamp: order.createdAt || new Date().toISOString()
-                }
-            ],
-            // Include WooCommerce customer ID if available
-            woocommerceId: order.woocommerceId || null,
-            woocommerceCustomerId: order.woocommerceCustomerId || null,
-            lastSynced: order.lastSynced || null,
-            ...order // Preserve any other fields
-        };
-    }, []);
-
     // Get user orders from local storage (simulating API call)
     const fetchUserOrders = useCallback(async (userId) => {
         setIsLoading(true);
@@ -79,17 +35,11 @@ export function useOrdersAPI() {
 
             const orders = getOrdersFromLocalStorage(userId);
 
-            // Normalize all orders for consistency
-            const normalizedOrders = orders.map(order => normalizeOrderData(order));
-
-            // Sort by most recent first
-            normalizedOrders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-
             // Simulate pagination functionality
-            setHasMore(normalizedOrders.length > 10);
+            setHasMore(orders.length > 10);
             setLastDoc(10);
 
-            return { orders: normalizedOrders.slice(0, 10) };
+            return { orders: orders.slice(0, 10) };
         } catch (error) {
             setError('Failed to load orders. Using local data instead.');
             console.error('Error fetching orders:', error);
@@ -97,7 +47,7 @@ export function useOrdersAPI() {
         } finally {
             setIsLoading(false);
         }
-    }, [getOrdersFromLocalStorage, normalizeOrderData]);
+    }, [getOrdersFromLocalStorage]);
 
     // Get more user orders (for pagination)
     const fetchMoreUserOrders = useCallback(async (userId) => {
@@ -137,10 +87,7 @@ export function useOrdersAPI() {
             if (!userId) return null;
 
             const allOrders = getOrdersFromLocalStorage(userId);
-            const order = allOrders.find(order => order.id === orderId);
-
-            // Return normalized order data
-            return normalizeOrderData(order);
+            return allOrders.find(order => order.id === orderId) || null;
         } catch (error) {
             console.error('Error fetching order details:', error);
             setError('Failed to load order details');
@@ -148,7 +95,7 @@ export function useOrdersAPI() {
         } finally {
             setIsLoading(false);
         }
-    }, [getOrdersFromLocalStorage, normalizeOrderData]);
+    }, [getOrdersFromLocalStorage]);
 
     const updateOrderStatus = async (orderId, newStatus, paymentDetails = null) => {
         if (!orderId) {
@@ -190,21 +137,6 @@ export function useOrdersAPI() {
                 }
                 if (paymentDetails.paymentMethod) {
                     allOrders[orderIndex].paymentMethod = paymentDetails.paymentMethod;
-
-                    // Set appropriate status based on payment method
-                    if (paymentDetails.paymentMethod === 'cod') {
-                        // For COD, status should be confirmed
-                        allOrders[orderIndex].status = 'confirmed';
-                        statusUpdate.status = 'confirmed';
-                    } else if (paymentDetails.paymentMethod === 'online' && paymentDetails.status === 'paid') {
-                        // For successful online payment, status should be processing
-                        allOrders[orderIndex].status = 'processing';
-                        statusUpdate.status = 'processing';
-                    } else if (paymentDetails.paymentMethod === 'online') {
-                        // For pending online payment, status remains pending
-                        allOrders[orderIndex].status = 'pending';
-                        statusUpdate.status = 'pending';
-                    }
                 }
             }
 
@@ -244,10 +176,6 @@ export function useOrdersAPI() {
             const userId = orderData.userId;
             const allOrders = getOrdersFromLocalStorage(userId);
 
-            // Get user profile to include WooCommerce customer ID if available
-            const userProfile = getUserProfile(userId);
-            const woocommerceCustomerId = userProfile?.woocommerceId || null;
-
             // Create a new order with a unique ID
             const newOrderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -262,8 +190,7 @@ export function useOrdersAPI() {
                 }],
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString(),
-                totalAmount: calculateOrderTotal(orderData.items),
-                woocommerceCustomerId // Add WooCommerce customer ID
+                totalAmount: calculateOrderTotal(orderData.items)
             };
 
             // Add to local storage
@@ -283,9 +210,7 @@ export function useOrdersAPI() {
     const calculateOrderTotal = (items) => {
         if (!items || !Array.isArray(items)) return 0;
         return items.reduce((total, item) => {
-            const quantity = item.quantity || 1;
-            const price = parseFloat(item.price) || 0;
-            return total + (price * quantity);
+            return total + (item.price * item.quantity);
         }, 0);
     };
 
@@ -297,7 +222,6 @@ export function useOrdersAPI() {
         createNewOrder,
         isLoading,
         error,
-        hasMore,
-        normalizeOrderData // Export the normalize function for use in other components
+        hasMore
     };
 }

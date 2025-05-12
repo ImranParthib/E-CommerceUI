@@ -2,12 +2,11 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { ShoppingBag, Minus, Plus, X, ChevronRight, AlertCircle } from 'lucide-react';
 import { useCart } from '@/app/context/CartContext';
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { usePathname } from 'next/navigation';
 import { AnimatePresence, motion } from 'framer-motion';
 import { toast } from 'react-toastify';
-import { DELIVERY_FEE, FREE_DELIVERY_THRESHOLD } from '@/app/config/constants';
-import { useUserProfile } from '@/app/context/UserProfileContext';
 
 const StickyCart = () => {
 	const [isExpanded, setIsExpanded] = useState(false);
@@ -21,11 +20,13 @@ const StickyCart = () => {
 		updateQuantity,
 		removeFromCart
 	} = useCart();
-	const { userProfile, getDefaultAddress } = useUserProfile();
 	const router = useRouter();
 	const pathname = usePathname();
 	const itemCount = getCartItemsCount();
 	const cartTotal = getCartTotal();
+
+	// Delivery fee constant
+	const DELIVERY_FEE = 60;
 
 	// Memoize toggle function to prevent rerenders
 	const toggleCart = useCallback(() => {
@@ -131,41 +132,27 @@ const StickyCart = () => {
 		}
 	};
 
-	const handleQuantityChange = (item, newQuantity) => {
-		try {
-			// Use the whole item object to ensure we're targeting the exact item with its attributes
-			if (newQuantity >= 1) {
-				updateQuantity(item, newQuantity, item.category, item.selectedAttributes);
-			} else {
-				removeFromCart(item, item.category, item.selectedAttributes);
-				toast.info(`${item.name} removed from cart`);
+	const handleQuantityChange = (itemId, newQuantity, itemName, category) => {
+		if (newQuantity >= 1) {
+			updateQuantity(itemId, newQuantity, category);
+
+			// Show toast notification for quantity updates
+			if (newQuantity > 1) {
+				toast.info(`Updated quantity of ${itemName} to ${newQuantity}`);
 			}
-		} catch (error) {
-			console.error('Error updating cart:', error);
+		} else {
+			// Use a more user-friendly confirmation
+			const confirmRemove = window.confirm(`Remove ${itemName} from your cart?`);
+			if (confirmRemove) {
+				// Pass the category parameter to removeFromCart
+				removeFromCart(itemId, category);
+				toast.info(`${itemName} removed from cart`);
+			}
 		}
-	};
-
-	// Calculate actual delivery fee based on cart total and location
-	const calculateDeliveryFee = () => {
-		if (cartTotal >= FREE_DELIVERY_THRESHOLD) {
-			return 0;
-		}
-
-		// Get user's default address to determine delivery fee
-		const defaultAddress = userProfile ? getDefaultAddress() : null;
-		const userLocation = defaultAddress ? defaultAddress.city : null;
-
-		// Calculate fee based on location
-		const baseFee = userLocation && userLocation.toLowerCase() === 'dhaka'
-			? DELIVERY_FEE.INSIDE_DHAKA
-			: DELIVERY_FEE.OUTSIDE_DHAKA;
-
-		return baseFee;
 	};
 
 	// Format price with commas
 	const formatPrice = (price) => {
-		if (price === null || price === undefined) return '0';
 		return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
 	};
 
@@ -252,38 +239,20 @@ const StickyCart = () => {
 											exit={{ opacity: 0, height: 0, marginBottom: 0 }}
 										>
 											<div className="relative w-20 h-20 bg-gray-50 rounded">
-												{item.images?.[0] ? (
-													<img
-														src={item.images[0].src}
-														alt={item.name}
-														className="object-contain w-full h-full p-1"
-													/>
-												) : (
-													<img
-														src={item.image}
-														alt={item.name}
-														className="object-contain w-full h-full p-1"
-													/>
-												)}
+												<Image
+													src={item.image}
+													alt={item.name}
+													fill
+													sizes="80px"
+													className="object-contain p-1"
+												/>
 											</div>
 											<div className="flex-1">
 												<h4 className="text-sm font-medium line-clamp-2">{item.name}</h4>
-
-												{/* Display product attributes if available */}
-												{item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0 && (
-													<div className="mt-1 mb-1">
-														<p className="text-xs text-blue-600">
-															{Object.entries(item.selectedAttributes).map(([key, value]) => (
-																<span key={key} className="mr-1">{key}: {value}</span>
-															))}
-														</p>
-													</div>
-												)}
-
 												<div className="flex items-center justify-between mt-2">
 													<div className="flex items-center border rounded">
 														<button
-															onClick={() => handleQuantityChange(item, item.quantity - 1)}
+															onClick={() => handleQuantityChange(item.id, item.quantity - 1, item.name, item.category)}
 															className="p-1 hover:bg-gray-100 transition-colors"
 															aria-label={`Decrease quantity of ${item.name}`}
 														>
@@ -291,7 +260,7 @@ const StickyCart = () => {
 														</button>
 														<span className="px-2 min-w-[24px] text-center">{item.quantity}</span>
 														<button
-															onClick={() => handleQuantityChange(item, item.quantity + 1)}
+															onClick={() => handleQuantityChange(item.id, item.quantity + 1, item.name, item.category)}
 															className="p-1 hover:bg-gray-100 transition-colors"
 															aria-label={`Increase quantity of ${item.name}`}
 														>
@@ -299,13 +268,8 @@ const StickyCart = () => {
 														</button>
 													</div>
 													<span className="font-medium">৳{formatPrice(item.price * item.quantity)}</span>
-													{/* Remove button */}
 													<button
-														onClick={(e) => {
-															e.preventDefault();
-															e.stopPropagation();
-															handleQuantityChange(item, 0);
-														}}
+														onClick={() => handleQuantityChange(item.id, 0, item.name, item.category)}
 														className="text-red-500 hover:text-red-700 transition-colors p-1"
 														aria-label={`Remove ${item.name} from cart`}
 													>
@@ -327,7 +291,7 @@ const StickyCart = () => {
 									<button
 										onClick={() => {
 											toggleCart();
-											router.push('/');
+											router.push('/flash-sales');
 										}}
 										className="flex items-center text-yellow-600 hover:text-yellow-800 font-medium"
 									>
@@ -345,22 +309,17 @@ const StickyCart = () => {
 								</div>
 								<div className="flex justify-between mb-4">
 									<span className="text-gray-600">Delivery:</span>
-									<span className="font-medium">
-										{calculateDeliveryFee() === 0
-											? 'Free'
-											: `৳${formatPrice(calculateDeliveryFee())}`
-										}
-									</span>
+									<span className="font-medium">৳{DELIVERY_FEE}</span>
 								</div>
 								<div className="flex justify-between mb-4 text-lg font-bold">
 									<span>Total:</span>
-									<span>৳{formatPrice(cartTotal + calculateDeliveryFee())}</span>
+									<span>৳{formatPrice(cartTotal + DELIVERY_FEE)}</span>
 								</div>
 
-								{cartTotal < FREE_DELIVERY_THRESHOLD && (
+								{cartTotal < 500 && (
 									<div className="mb-4 p-2 bg-yellow-50 text-xs rounded flex items-center">
 										<AlertCircle className="h-4 w-4 text-yellow-600 mr-1" />
-										<span>Add ৳{formatPrice(FREE_DELIVERY_THRESHOLD - cartTotal)} more for free delivery!</span>
+										<span>Add ৳{formatPrice(500 - cartTotal)} more for free delivery!</span>
 									</div>
 								)}
 
@@ -388,6 +347,21 @@ const StickyCart = () => {
 					</motion.div>
 				)}
 			</AnimatePresence>
+
+			{/* Overlay
+			<AnimatePresence>
+				{isExpanded && (
+					<motion.div
+						initial={{ opacity: 0 }}
+						animate={{ opacity: 0.5 }}
+						exit={{ opacity: 0 }}
+						transition={{ duration: 0.2 }}
+						className="fixed top-14 inset-x-0 bg-black  bottom-0 z-30  "
+						onClick={toggleCart}
+						aria-hidden="true"
+					/>
+				)}
+			</AnimatePresence> */}
 		</>
 	);
 };

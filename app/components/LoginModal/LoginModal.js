@@ -6,12 +6,10 @@ import { FcGoogle } from 'react-icons/fc';
 import Image from 'next/image';
 import { toast, ToastContainer } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { useUserProfile } from '@/app/context/UserProfileContext';
 
-const LoginModal = ({ isOpen, onClose, redirectAfterLogin }) => {
+const LoginModal = ({ isOpen, onClose }) => {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState(null);
-    const { syncWooCommerceCustomer } = useUserProfile();
 
     if (!isOpen) return null;
 
@@ -19,25 +17,13 @@ const LoginModal = ({ isOpen, onClose, redirectAfterLogin }) => {
         try {
             setIsLoading(true);
             setError(null);
-
-            // Firebase authentication
             const result = await signInWithPopup(auth, provider);
-            const { user } = result;
-
-            // Sync with WooCommerce
-            await syncWooCommerceCustomer({
-                email: user.email,
-                displayName: user.displayName,
-                uid: user.uid,
-                phoneNumber: user.phoneNumber || ''
-            });
-
             toast.success('Successfully signed in!');
-            onClose(redirectAfterLogin);
+            onClose();
         } catch (error) {
-            console.error('Login error:', error);
             setError('Failed to sign in with Google. Please try again.');
             toast.error('Failed to sign in with Google');
+            console.error(error);
         } finally {
             setIsLoading(false);
         }
@@ -57,20 +43,16 @@ const LoginModal = ({ isOpen, onClose, redirectAfterLogin }) => {
                 </button>
 
                 {/* Logo and Welcome Message */}
-                <div className="text-center mb-8">
-                    <div className="flex items-center justify-center mb-4">
-                        <Image
-                            src="/favicon.ico"
-                            alt="Logo"
-                            width={60}
-                            height={60}
-                            className="rounded-full shadow-lg"
-                        />
-                    </div>
-                    <h2 className="text-3xl font-extrabold text-gray-900">Welcome Back!</h2>
-                    <p className="text-gray-500 mt-2 text-sm">
-                        Sign in to continue to <span className="text-blue-600 font-medium">KenaKata</span>
-                    </p>
+                <div className="text-center mb-6">
+                    <Image
+                        src="/logo/chaldal.png"
+                        alt="Logo"
+                        width={80}
+                        height={80}
+                        className="mx-auto mb-4"
+                    />
+                    <h2 className="text-2xl font-bold text-gray-800">Welcome Back!</h2>
+                    <p className="text-gray-600 mt-2">Login to access your account</p>
                 </div>
 
                 {/* Error Message */}
@@ -94,6 +76,29 @@ const LoginModal = ({ isOpen, onClose, redirectAfterLogin }) => {
                     )}
                     {isLoading ? 'Signing in...' : 'Continue with Google'}
                 </button>
+
+                {/* Divider */}
+                <div className="relative mb-6">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-gray-300"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                        <span className="px-2 bg-white text-gray-500">or create an account</span>
+                    </div>
+                </div>
+
+                {/* Sign Up Link */}
+                <div className="text-center space-y-4">
+                    <p className="text-gray-600">New to our store?</p>
+                    <button
+                        className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors"
+                        onClick={() => {/* Handle registration navigation */ }}
+                        disabled={isLoading}
+                    >
+                        Create Account
+                    </button>
+                </div>
+
                 {/* Terms and Privacy */}
                 <p className="text-xs text-gray-500 text-center mt-6">
                     By continuing, you agree to our{' '}

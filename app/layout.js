@@ -13,8 +13,6 @@ import { FavoritesProvider } from './context/FavoritesContext';
 import { UserProfileProvider } from './context/UserProfileContext';
 import { CategoryProvider } from './context/CategoryContext';
 import { SWRConfig } from 'swr';
-import { OrderSyncProvider } from './context/OrderSyncContext';
-
 
 const geist = Geist({
   subsets: ["latin"],
@@ -23,21 +21,21 @@ const geist = Geist({
 
 export const metadata = {
   title: {
-    default: "Kenakata - Easy Online Shopping",
-    template: "%s | Kenakata",
+    default: "Chaldal - Online Grocery Shopping & Delivery",
+    template: "%s | Chaldal",
   },
-  description: "Bangladesh's largest growing online shopping store with fast delivery",
+  description: "Bangladesh's largest online grocery store with over 15000 products",
   keywords: ["grocery", "online shopping", "bangladesh", "delivery", "supermarket"],
-  authors: [{ name: "Kenakata" }],
-  creator: "Kenakata Limited",
-  metadataBase: new URL("https://onlinekenakata.vercel.app"),
+  authors: [{ name: "Chaldal" }],
+  creator: "Chaldal Limited",
+  metadataBase: new URL("https://chaldal.com"),
   openGraph: {
     type: "website",
     locale: "en_US",
-    url: "https://onlinekenakata.vercel.app",
-    title: "Kenakata - Online Grocery Shopping & Delivery",
+    url: "https://chaldal.com",
+    title: "Chaldal - Online Grocery Shopping & Delivery",
     description: "Bangladesh's largest online grocery store",
-    siteName: "Kenakata",
+    siteName: "Chaldal",
   },
 };
 
@@ -56,20 +54,18 @@ export default function RootLayout({ children }) {
                   <FavoritesProvider>
                     <UserProfileProvider>
                       <CategoryProvider>
-                        <OrderSyncProvider>
-                          <div className="relative">
-                            <div id="page-wrapper" className="transition-[margin] duration-300">
-                              <NavBar />
-                              <div className="flex min-h-screen pt-10">
-                                <SideNavigation />
-                                <main className="flex-1 w-full">
-                                  {children}
-                                </main>
-                              </div>
+                        <div className="relative">
+                          <div id="page-wrapper" className="transition-[margin] duration-300">
+                            <NavBar />
+                            <div className="flex min-h-screen">
+                              <SideNavigation />
+                              <main className="flex-1">
+                                {children}
+                              </main>
                             </div>
-                            <StickyCart />
                           </div>
-                        </OrderSyncProvider>
+                          <StickyCart />
+                        </div>
                       </CategoryProvider>
                     </UserProfileProvider>
                   </FavoritesProvider>

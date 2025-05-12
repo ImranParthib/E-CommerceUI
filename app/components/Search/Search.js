@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react';
 import { Search as SearchIcon, ShoppingBag, X } from "lucide-react";
+import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
@@ -75,16 +76,6 @@ const Search = ({ className = '' }) => {
         router.push(`/search/${encodeURIComponent(productName)}`);
     };
 
-    // Helper function to get the correct product image URL
-    const getProductImage = (product) => {
-        if (product.images && product.images[0] && product.images[0].src) {
-            return product.images[0].src;
-        } else if (product.image) {
-            return product.image;
-        }
-        return '/placeholder-image.jpg'; // Fallback image
-    };
-
     return (
         <div className={`relative ${className}`} ref={searchRef}>
             <form onSubmit={handleSubmit} className="relative">
@@ -126,14 +117,13 @@ const Search = ({ className = '' }) => {
                                     className="flex items-center gap-3 px-4 py-2 hover:bg-gray-50 cursor-pointer"
                                     onClick={() => handleProductClick(product.name)}
                                 >
-                                    <div className="relative w-10 h-10 bg-gray-50 rounded">
-                                        <div className="absolute inset-0 bg-gray-50 rounded">
-                                            <img
-                                                src={getProductImage(product)}
-                                                alt={product.name}
-                                                className="w-full h-full object-contain p-1"
-                                            />
-                                        </div>
+                                    <div className="relative w-10 h-10">
+                                        <Image
+                                            src={product.image}
+                                            alt={product.name}
+                                            fill
+                                            className="object-cover rounded"
+                                        />
                                     </div>
                                     <div className="flex-1">
                                         <p className="text-sm font-medium text-gray-900">{product.name}</p>

@@ -1,12 +1,12 @@
-# E-Commerce App - Kenakata Clone
+# E-Commerce App - Chaldal Clone
 
-![Kenakata Clone](https://img.shields.io/badge/Project-Kenakata%20Clone-yellow)
+![Chaldal Clone](https://img.shields.io/badge/Project-Chaldal%20Clone-yellow)
 ![Status](https://img.shields.io/badge/Status-Development-green)
 ![Private](https://img.shields.io/badge/Access-Private-red)
 
 ## Overview
 
-This is a full-featured e-commerce application built with Next.js 15, resembling Kenakata's online grocery platform. The application features a modern, responsive UI with a comprehensive shopping experience including product browsing, cart management, favorites, user profile management, and a complete ordering system.
+This is a full-featured e-commerce application built with Next.js 15, resembling Chaldal's online grocery platform. The application features a modern, responsive UI with a comprehensive shopping experience including product browsing, cart management, favorites, user profile management, and a complete ordering system.
 
 ## 🔒 Private Repository
 

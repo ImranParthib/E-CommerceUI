@@ -102,7 +102,7 @@ const Footer = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-1 md:gap-6">
                         {/* About Section with Payment Methods */}
                         <div className="space-y-1 mb-2 md:mb-0">
-                            <FooterSection title="About Kenakata" links={footerSections.about} />
+                            <FooterSection title="About Chaldal" links={footerSections.about} />
                             <div className="pt-2 md:pt-4">
                                 <div className="flex flex-col items-start gap-2">
                                     <span className="text-base font-bold text-gray-600 whitespace-nowrap">Payment Methods:</span>
@@ -156,7 +156,7 @@ const Footer = () => {
                                 <div className="text-base">
                                     <span className="text-gray-500">or</span>{' '}
                                     <span className="text-[#456aa0cc] hover:text-[#ff6f71] cursor-pointer">
-                                        support@kenakata.com
+                                        support@chaldal.com
                                     </span>
                                 </div>
                             </div>
@@ -169,7 +169,7 @@ const Footer = () => {
                     <div className="container mx-auto px-4 lg:px-8">
                         <div className="flex flex-col md:flex-row justify-between items-center gap-3 py-3">
                             <div className="text-sm text-gray-600 text-center md:text-left">
-                                © 2013 Kenakata Limited
+                                © 2013 Chaldal Limited
                             </div>
                             <div className="flex flex-wrap items-center justify-center gap-3">
                                 <div className="flex items-center gap-3">

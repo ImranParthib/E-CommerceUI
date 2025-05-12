@@ -10,18 +10,8 @@ import LoginModal from '@/app/components/LoginModal/LoginModal';
 import { useOrders } from '@/app/context/OrderContext';
 import { useUserProfile } from '@/app/context/UserProfileContext';
 import { toast } from 'react-toastify';
-import { MapPin, Truck } from 'lucide-react';
-import {
-    DELIVERY_FEE,
-    EXPRESS_DELIVERY_SURCHARGE,
-    FREE_DELIVERY_THRESHOLD
-} from '@/app/config/constants';
-
-// Helper function to format price numbers
-const formatPrice = (price) => {
-    if (price === null || price === undefined) return 0;
-    return typeof price === 'number' ? price.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) : 0;
-};
+import { MapPin } from 'lucide-react';
+import Image from 'next/image';
 
 export default function CheckoutPage() {
     const { cartItems, getCartTotal } = useCart();
@@ -33,12 +23,10 @@ export default function CheckoutPage() {
     const [errors, setErrors] = useState({});
     const [isProcessing, setIsProcessing] = useState(false);
     const [prefillData, setPrefillData] = useState(null);
-    const [isRedirectingToPayment, setIsRedirectingToPayment] = useState(false);
-    const [deliveryTime, setDeliveryTime] = useState('standard');
-    const [deliveryLocation, setDeliveryLocation] = useState(null);
 
     useEffect(() => {
         const unsubscribe = auth.onAuthStateChanged((user) => {
+            // Only show login modal if user is not logged in
             if (!user && !isLoginModalOpen) {
                 setIsLoginModalOpen(true);
             }
@@ -47,25 +35,25 @@ export default function CheckoutPage() {
         return () => unsubscribe();
     }, [isLoginModalOpen]);
 
+    // Enhanced the effect to handle building correct address format for the form
     useEffect(() => {
         if (userProfile) {
+            // Get default address if available
             const defaultAddress = getDefaultAddress();
 
             if (defaultAddress) {
-                setDeliveryLocation(defaultAddress.city);
-
-                const formattedAddress = formatDeliveryAddress(defaultAddress);
-
+                // Create a complete profile with default address info
                 setPrefillData({
                     name: userProfile.displayName || auth.currentUser?.displayName || '',
                     phone: defaultAddress.phoneNumber || userProfile.phoneNumber || '',
                     email: userProfile.email || auth.currentUser?.email || '',
-                    address: formattedAddress,
+                    // Combine full address and area for delivery
+                    address: `${defaultAddress.fullAddress}${defaultAddress.area ? ', ' + defaultAddress.area : ''}`,
                     city: defaultAddress.city || 'Dhaka',
-                    zip: '1200',
-                    selectedAddressId: defaultAddress.id
+                    zip: '1200'  // Default ZIP for Dhaka
                 });
             } else {
+                // Otherwise, just prefill with the user's basic info
                 setPrefillData({
                     name: userProfile.displayName || auth.currentUser?.displayName || '',
                     phone: userProfile.phoneNumber || '',
@@ -75,27 +63,16 @@ export default function CheckoutPage() {
         }
     }, [userProfile, getDefaultAddress]);
 
-    const formatDeliveryAddress = (address) => {
-        if (!address) return '';
-
-        let formattedAddress = address.fullAddress || '';
-
-        if (address.area) {
-            formattedAddress += formattedAddress ? `, ${address.area}` : address.area;
-        }
-
-        return formattedAddress;
-    };
-
+    // If cart is empty, redirect to home after a short delay
     useEffect(() => {
-        if (cartItems.length === 0 && !isRedirectingToPayment) {
+        if (cartItems.length === 0) {
             const timer = setTimeout(() => {
                 router.push('/');
             }, 3000);
 
             return () => clearTimeout(timer);
         }
-    }, [cartItems.length, router, isRedirectingToPayment]);
+    }, [cartItems.length, router]);
 
     const handleLoginModalClose = () => {
         setIsLoginModalOpen(false);
@@ -106,15 +83,19 @@ export default function CheckoutPage() {
 
     const validateDeliveryDetails = (details) => {
         const errors = {};
+        // Make validation less strict - focus on essential fields
         if (!details.name) errors.name = "Name is required";
         if (!details.address) errors.address = "Address is required";
         if (!details.phone) errors.phone = "Phone number is required";
 
+        // Make phone validation more flexible
         if (details.phone && !/^\+?[\d\s-]{8,15}$/.test(details.phone.replace(/[^0-9+\s-]/g, '')))
             errors.phone = "Please enter a valid phone number";
 
         return errors;
-    }; const handleCheckout = async (details) => {
+    };
+
+    const handleCheckout = async (details) => {
         const validationErrors = validateDeliveryDetails(details);
         if (Object.keys(validationErrors).length > 0) {
             setErrors(validationErrors);
@@ -126,23 +107,14 @@ export default function CheckoutPage() {
             return;
         }
 
-        setDeliveryLocation(details.city);
-
         try {
             setIsProcessing(true);
 
-            const orderDetails = {
-                ...details,
-                deliveryFee: calculateDeliveryFee(deliveryTime, details.city),
-                deliveryTime: deliveryTime
-            };
-
-            // Create order with pending payment method
-            // The payment method will be selected on the next screen
-            const order = createOrder(orderDetails);
+            // Create order with the form data
+            const order = createOrder(details);
 
             if (order) {
-                setIsRedirectingToPayment(true);
+                // Navigate to payment page with the new order ID
                 router.push(`/checkout/payment/${order.id}`);
             } else {
                 toast.error("Something went wrong. Please try again.");
@@ -155,7 +127,7 @@ export default function CheckoutPage() {
         }
     };
 
-    if (cartItems.length === 0 && !isRedirectingToPayment) {
+    if (cartItems.length === 0) {
         return (
             <div className={`container flex flex-col justify-center items-center h-screen mx-auto px-4 py-8 bg-white transition-all duration-300 ${isSidebarOpen ? 'ml-72' : 'ml-0'}`}>
                 <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
@@ -170,36 +142,13 @@ export default function CheckoutPage() {
         );
     }
 
-    const calculateDeliveryFee = (deliverySpeed, location = deliveryLocation) => {
-        const subtotal = getCartTotal();
-
-        if (subtotal >= FREE_DELIVERY_THRESHOLD) {
-            return 0;
-        }
-
-        let baseFee = location && location.toLowerCase() === 'dhaka'
-            ? DELIVERY_FEE.INSIDE_DHAKA
-            : DELIVERY_FEE.OUTSIDE_DHAKA;
-
-        return deliverySpeed === 'express'
-            ? baseFee + EXPRESS_DELIVERY_SURCHARGE
-            : baseFee;
-    };
-
-    const handleDeliveryTimeChange = (e) => {
-        setDeliveryTime(e.target.value);
-    };
-
-    const currentDeliveryFee = calculateDeliveryFee(deliveryTime);
-    const orderTotal = getCartTotal() + currentDeliveryFee;
-    const isFreeShipping = getCartTotal() >= FREE_DELIVERY_THRESHOLD;
-
     return (
         <>
             <div className={`min-h-screen bg-gray-50 pt-16 ${isSidebarOpen ? 'ml-64' : 'ml-0'}`}>
                 <div className="max-w-6xl mx-auto px-4 py-8">
                     <h1 className="text-2xl font-bold mb-6">Checkout</h1>
 
+                    {/* Add a notice about using saved addresses */}
                     {userProfile?.addresses && userProfile.addresses.length > 0 && (
                         <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                             <p className="text-sm flex items-center gap-1">
@@ -227,109 +176,37 @@ export default function CheckoutPage() {
                                     {cartItems.map((item) => (
                                         <div key={item.id} className="flex items-center py-3 border-b">
                                             <div className="h-16 w-16 flex-shrink-0 overflow-hidden rounded-md border border-gray-200 mr-4">
-                                                {item.images && item.images[0]?.src ? (
-                                                    <img
-                                                        src={item.images[0].src}
-                                                        alt={item.name}
-                                                        className="h-full w-full object-contain object-center"
-                                                    />
-                                                ) : item.image ? (
-                                                    <img
+                                                {item.image && (
+                                                    <Image
                                                         src={item.image}
                                                         alt={item.name}
                                                         className="h-full w-full object-contain object-center"
+                                                        width={64}
+                                                        height={64}
                                                     />
-                                                ) : (
-                                                    <div className="h-full w-full flex items-center justify-center bg-gray-100">
-                                                        <span className="text-gray-400 text-xs">No image</span>
-                                                    </div>
                                                 )}
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="text-sm font-medium text-gray-900 truncate">{item.name}</p>
-                                                {item.selectedAttributes && Object.keys(item.selectedAttributes).length > 0 && (
-                                                    <p className="text-xs text-blue-600 mt-0.5 mb-0.5">
-                                                        {Object.entries(item.selectedAttributes).map(([key, value]) => (
-                                                            <span key={key} className="mr-1">{key}: {value}</span>
-                                                        ))}
-                                                    </p>
-                                                )}
                                                 <p className="text-xs text-gray-500">Qty: {item.quantity}</p>
                                             </div>
-                                            <p className="text-sm font-medium text-gray-900">৳{formatPrice(item.price * item.quantity)}</p>
+                                            <p className="text-sm font-medium text-gray-900">৳{item.price * item.quantity}</p>
                                         </div>
                                     ))}
                                 </div>
-
-                                <div className="mb-4">
-                                    <h3 className="text-sm font-medium mb-2">Delivery Options</h3>
-                                    <div className="bg-gray-50 p-3 rounded-md mb-2">
-                                        <div className="flex items-start">
-                                            <input
-                                                id="standard-delivery"
-                                                name="deliveryTime"
-                                                type="radio"
-                                                className="mt-1.5"
-                                                value="standard"
-                                                checked={deliveryTime === 'standard'}
-                                                onChange={handleDeliveryTimeChange}
-                                            />
-                                            <label htmlFor="standard-delivery" className="ml-2 block text-sm">
-                                                <span className="font-medium text-gray-900">Standard Delivery</span>
-                                                <span className="block text-gray-500 text-xs">Delivery within 2-3 days</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                    <div className="bg-gray-50 p-3 rounded-md">
-                                        <div className="flex items-start">
-                                            <input
-                                                id="express-delivery"
-                                                name="deliveryTime"
-                                                type="radio"
-                                                className="mt-1.5"
-                                                value="express"
-                                                checked={deliveryTime === 'express'}
-                                                onChange={handleDeliveryTimeChange}
-                                            />
-                                            <label htmlFor="express-delivery" className="ml-2 block text-sm">
-                                                <span className="font-medium text-gray-900">Express Delivery (+৳{formatPrice(EXPRESS_DELIVERY_SURCHARGE)})</span>
-                                                <span className="block text-gray-500 text-xs">Delivery within 24 hours</span>
-                                            </label>
-                                        </div>
-                                    </div>
-                                </div>
-
                                 <div className="space-y-2">
                                     <div className="flex justify-between">
                                         <p className="text-gray-600">Subtotal</p>
-                                        <p className="font-medium">৳{formatPrice(getCartTotal())}</p>
+                                        <p className="font-medium">৳{getCartTotal()}</p>
                                     </div>
-                                    <div className="flex justify-between items-center">
-                                        <div className="flex items-center">
-                                            <p className="text-gray-600 mr-1">Shipping</p>
-                                            {isFreeShipping && (
-                                                <span className="text-xs bg-green-100 text-green-800 px-2 py-0.5 rounded">FREE</span>
-                                            )}
-                                        </div>
-                                        <p className="font-medium">
-                                            {isFreeShipping ? (
-                                                <span className="line-through text-gray-400 mr-1">৳{formatPrice(calculateDeliveryFee(deliveryTime, 'Dhaka'))}</span>
-                                            ) : ''}
-                                            ৳{formatPrice(currentDeliveryFee)}
-                                        </p>
+                                    <div className="flex justify-between">
+                                        <p className="text-gray-600">Shipping</p>
+                                        <p className="font-medium">৳60</p>
                                     </div>
-                                    {!isFreeShipping && getCartTotal() > 0 && (
-                                        <div className="bg-blue-50 p-2 rounded text-xs text-blue-700 flex items-center">
-                                            <Truck className="w-3 h-3 mr-1 flex-shrink-0" />
-                                            <span>
-                                                Add ৳{formatPrice(FREE_DELIVERY_THRESHOLD - getCartTotal())} more for free shipping!
-                                            </span>
-                                        </div>
-                                    )}
                                     <div className="border-t pt-2 mt-2">
                                         <div className="flex justify-between font-medium text-lg">
                                             <p>Total</p>
-                                            <p>৳{formatPrice(orderTotal)}</p>
+                                            <p>৳{getCartTotal() + 60}</p>
                                         </div>
                                         <p className="text-xs text-gray-500 mt-1">Including VAT</p>
                                     </div>

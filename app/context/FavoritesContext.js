@@ -5,7 +5,7 @@ import { toast } from 'react-toastify';
 
 const FavoritesContext = createContext();
 
-const FAVORITES_STORAGE_KEY = 'kenakata_favorite_items';
+const FAVORITES_STORAGE_KEY = 'chaldal_favorite_items';
 
 export function FavoritesProvider({ children }) {
     const [favorites, setFavorites] = useState([]);
